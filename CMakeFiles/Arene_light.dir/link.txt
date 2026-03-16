@@ -1,0 +1,1 @@
+/usr/bin/c++ -g -rdynamic CMakeFiles/Arene_light.dir/arbitre.cpp.o CMakeFiles/Arene_light.dir/jeu.cpp.o CMakeFiles/Arene_light.dir/main.cpp.o -o Arene_light  joueurs/libjoueurs.a 
