@@ -67,11 +67,6 @@ struct NoeudMCTS {
     }
 };
 
-static NoeudMCTS* racine_globale = NULL;
-static Jeu etat_apres_mon_coup;
-static bool etat_sauvegarde = false;
-static int profondeur_courante = 0;
-
 static void liberer_arbre(NoeudMCTS* noeud) {
     for (int i = 0; i < (int)noeud->enfants.size(); i++) {
         liberer_arbre(noeud->enfants[i]);
@@ -138,21 +133,9 @@ Joueur_MCTS::Joueur_MCTS(std::string nom, bool joueur)
 
 void Joueur_MCTS::initialisation() {
     srand(_etat++);
-    if (racine_globale != NULL) {
-        liberer_arbre(racine_globale);
-        racine_globale = NULL;
-    }
-    etat_sauvegarde = false;
-    profondeur_courante = 0;
 }
 
 void Joueur_MCTS::init_partie() {
-    if (racine_globale != NULL) {
-        liberer_arbre(racine_globale);
-        racine_globale = NULL;
-    }
-    etat_sauvegarde = false;
-    profondeur_courante = 0;
 }
 
 char Joueur_MCTS::nom_abbrege() const {
@@ -165,34 +148,10 @@ void Joueur_MCTS::recherche_coup(Jeu jeu, int& coup) {
         return;
     }
 
-    if (racine_globale != NULL && etat_sauvegarde) {
-        NoeudMCTS* nouveau = NULL;
-        for (int i = 0; i < (int)racine_globale->enfants.size(); i++) {
-            Jeu test = etat_apres_mon_coup;
-            test.joue(racine_globale->enfants[i]->coup);
-            if (test.nb_coups() == jeu.nb_coups()
-                && test.terminal() == jeu.terminal()
-                && test.pat() == jeu.pat()
-                && test.victoire() == jeu.victoire()) {
-                nouveau = racine_globale->enfants[i];
-                racine_globale->enfants.erase(racine_globale->enfants.begin() + i);
-                break;
-            }
-        }
-        liberer_arbre(racine_globale);
-        racine_globale = nouveau;
-        if (racine_globale != NULL) {
-            racine_globale->parent = NULL;
-        }
-        profondeur_courante++;
-    }
-
-    if (racine_globale == NULL) {
-        racine_globale = new NoeudMCTS(jeu, -1, NULL, profondeur_courante);
-    }
+    NoeudMCTS* racine = new NoeudMCTS(jeu, -1, NULL, 0);
 
     for (int iter = 0; iter < 500; iter++) {
-        NoeudMCTS* noeud = selection(racine_globale);
+        NoeudMCTS* noeud = selection(racine);
         if (!noeud->etat.terminal()) {
             noeud = expansion(noeud);
         }
@@ -200,7 +159,7 @@ void Joueur_MCTS::recherche_coup(Jeu jeu, int& coup) {
         retropropagation(noeud, victoire);
     }
 
-    NoeudMCTS* meilleur = racine_globale->meilleur_enfant_final();
+    NoeudMCTS* meilleur = racine->meilleur_enfant_final();
 
     if (meilleur != NULL) {
         coup = meilleur->coup;
@@ -208,29 +167,5 @@ void Joueur_MCTS::recherche_coup(Jeu jeu, int& coup) {
         coup = (rand() % jeu.nb_coups()) + 1;
     }
 
-    if (meilleur != NULL) {
-        int coup_choisi = meilleur->coup;
-        NoeudMCTS* nouveau = NULL;
-        for (int i = 0; i < (int)racine_globale->enfants.size(); i++) {
-            if (racine_globale->enfants[i]->coup == coup_choisi) {
-                nouveau = racine_globale->enfants[i];
-                racine_globale->enfants.erase(racine_globale->enfants.begin() + i);
-                break;
-            }
-        }
-        etat_apres_mon_coup = jeu;
-        etat_apres_mon_coup.joue(coup_choisi);
-        etat_sauvegarde = true;
-        profondeur_courante++;
-
-        liberer_arbre(racine_globale);
-        racine_globale = nouveau;
-        if (racine_globale != NULL) {
-            racine_globale->parent = NULL;
-        }
-    } else {
-        liberer_arbre(racine_globale);
-        racine_globale = NULL;
-        etat_sauvegarde = false;
-    }
+    liberer_arbre(racine);
 }
