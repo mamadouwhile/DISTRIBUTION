@@ -106,7 +106,6 @@ static NoeudMCTS* expansion(NoeudMCTS* noeud) {
 
 static bool simulation(NoeudMCTS* noeud, bool mcts_est_joueur1) {
     Jeu sim = noeud->etat;
-    int profondeur = noeud->profondeur_absolue;
     while (!sim.terminal()) {
         int n = sim.nb_coups();
         int coup;
@@ -116,14 +115,11 @@ static bool simulation(NoeudMCTS* noeud, bool mcts_est_joueur1) {
             coup = (rand() % n) + 1;
         }
         sim.joue(coup);
-        profondeur++;
     }
     if (sim.pat()) {
         return false;
     }
-    bool dernier_gagnant = sim.victoire();
-    bool joueur1_a_joue_en_dernier = (profondeur % 2 == 1);
-    return dernier_gagnant && (mcts_est_joueur1 == joueur1_a_joue_en_dernier);
+    return sim.victoire() == mcts_est_joueur1;
 }
 
 static void retropropagation(NoeudMCTS* noeud, bool victoire) {
