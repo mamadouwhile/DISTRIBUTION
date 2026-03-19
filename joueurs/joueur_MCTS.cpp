@@ -3,7 +3,6 @@
 #include <cmath>
 #include <vector>
 #include <limits>
-#include <iostream>
 
 struct NoeudMCTS {
     Jeu etat;
@@ -207,17 +206,6 @@ void Joueur_MCTS::recherche_coup(Jeu jeu, int& coup) {
     }
 
     NoeudMCTS* meilleur = racine_globale->meilleur_enfant_final();
-
-    std::cerr << "Racine visitée : " << racine_globale->nb_visites << " fois\n";
-    for (int i = 0; i < (int)racine_globale->enfants.size(); i++) {
-        NoeudMCTS* e = racine_globale->enfants[i];
-        double ratio = (e->nb_visites > 0) ? (double)e->nb_victoires / e->nb_visites : 0;
-        std::cerr << "  coup=" << e->coup
-                  << "  visites=" << e->nb_visites
-                  << "  victoires=" << e->nb_victoires
-                  << "  ratio=" << ratio
-                  << "\n";
-    }
 
     if (meilleur != NULL) {
         coup = meilleur->coup;
