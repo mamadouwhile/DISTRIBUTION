@@ -1,0 +1,22 @@
+.idea/
+
+# CMake build artifacts
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# Nested CMake outputs
+**/CMakeFiles/
+**/cmake_install.cmake
+**/Makefile
+
+# Built binaries and libraries
+*.a
+*.o
+*.obj
+*.exe
+*.out
+*.dll
+*.so
+*.dylib
