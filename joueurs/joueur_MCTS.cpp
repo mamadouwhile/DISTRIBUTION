@@ -128,7 +128,6 @@ static void retropropagation(NoeudMCTS* noeud, bool victoire) {
         if (victoire) {
             noeud->nb_victoires++;
         }
-        victoire = !victoire;
         noeud = noeud->parent;
     }
 }
