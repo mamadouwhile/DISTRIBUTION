@@ -20,3 +20,8 @@ Makefile
 *.dll
 *.so
 *.dylib
+
+# Local binaries and temporary analysis files
+Arene_light
+probe_mystere
+asm.txt
