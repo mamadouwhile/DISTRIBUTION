@@ -1,17 +1,17 @@
-# Deux joueurs MCTS pour un moteur de jeu fourni en `jeu.o`
+# Joueurs MCTS pour un moteur de jeu fourni en `jeu.o`
 
 ## 1. Presentation du projet
 
-Ce projet contient deux joueurs bases sur Monte Carlo Tree Search (MCTS) pour un moteur de jeu fourni sous forme binaire, via `jeu.o`.
+Ce projet contient une implementation de Monte Carlo Tree Search (MCTS) pour un moteur de jeu fourni sous forme binaire, via `jeu.o`.
 
-L'objectif n'est pas de coder une strategie parfaite pour un jeu connu d'avance, mais de proposer des joueurs capables de fonctionner dans un cadre partiellement opaque, avec un moteur fourni deja compile.
+L'objectif n'est pas de coder une strategie parfaite pour un jeu connu d'avance, mais de proposer un joueur capable de fonctionner dans un cadre partiellement opaque, avec un moteur deja compile et peu transparent.
 
-Le depot contient deux versions principales :
+Le depot contient maintenant deux versions de travail du joueur MCTS :
 
-- `joueurs/joueur_MCTS_basique.cpp` : une version simple, proche d'un MCTS standard
-- `joueurs/joueur_MCTS.cpp` : une version MCTS amelioree, qui ajoute des filtres tactiques avant la recherche et un rollout un peu plus oriente sur la base des tests établis sur le jeu mystère. Cette version peut être ignoré si on veut un joueur MCTS polyvalent (règles ou jeux différents)
+- `joueurs/joueur_MCTS.cpp` et `joueurs/joueur_MCTS.h` : la version principale actuellement compilee par le projet
+- `joueurs/joueur_MCTS_basique/joueur_MCTS.cpp` et `joueurs/joueur_MCTS_basique/joueur_MCTS.h` : une version basique rangee dans un sous-dossier de remplacement
 
-Les deux versions partagent les memes contraintes de base : elles doivent jouer sous une limite de temps courte et composer avec un moteur `jeu.o` dont le comportement n'est pas celui d'un type `Jeu` simplement copiable.
+Le `CMakeLists.txt` des joueurs ne compile que la version principale. La version basique est volontairement stockee a part, sous les memes noms de fichiers et de classe, pour qu'un correcteur ou un enseignant puisse la tester facilement en remplacant simplement les deux fichiers `joueur_MCTS.*` du dossier `joueurs`.
 
 ## 2. Idee generale de Monte Carlo Tree Search
 
@@ -22,7 +22,7 @@ On descend dans l'arbre a partir de la racine en choisissant a chaque noeud l'en
 
 Le choix se fait avec une formule de type UCB, qui combine :
 
-- l'exploitation : favoriser les coups qui ont deja de bons resultats
+- l'exploitation : favoriser les coups qui ont deja donne de bons resultats
 - l'exploration : continuer a essayer des branches encore peu visitees
 
 Le but est de ne pas se bloquer trop vite sur une seule branche, tout en concentrant progressivement le temps de calcul sur les lignes interessantes.
@@ -47,49 +47,42 @@ Le critere UCB sert a equilibrer exploration et exploitation.
 Concretement :
 
 - si l'exploration est trop faible, le joueur se fixe trop vite sur quelques branches
-- si elle est trop forte, le joueur disperse son temps de calcul et n'apprend pas assez sur les meilleurs coups
+- si elle est trop forte, le joueur disperse son temps de calcul et n'apprend pas assez sur les meilleures branches
 
 Dans ce projet, cet equilibre est principalement regle par `C_EXPLORATION`.
 
-## 3. Presentation des deux joueurs
+## 3. Organisation des deux versions
 
-## `joueur_MCTS_basique`
+## Version principale : `joueurs/joueur_MCTS.*`
 
-### Philosophie
-Cette version cherche a rester un MCTS simple et lisible :
+Cette version reste un MCTS, mais elle ajoute quelques decisions pragmatiques avant la recherche statistique.
 
-- pas de filtre tactique avant la recherche
-- pas de detection explicite d'un gain immediat avant l'arbre
-- rollout purement aleatoire
-
-### Avantages
-- structure plus simple a comprendre
-- comportement proche d'un MCTS classique
-- bonne base de comparaison pour mesurer l'effet des heuristiques ajoutees ensuite
-
-### Limites
-- les simulations sont plus bruitees
-- le joueur peut perdre du temps sur des coups tactiquement mauvais a tres courte profondeur
-- les parties peuvent etre moins bien orientees quand il existe des reponses immediates evidentes
-
-## `joueur_MCTS`
-
-### Ameliorations par rapport au basique
-Cette version reste un MCTS, mais elle ajoute des decisions pragmatiques avant la recherche statistique.
-
-### Filtres tactiques
+### Ameliorations
 Avant de lancer l'arbre, le joueur :
 
 - cherche un coup gagnant immediat
 - essaie d'eliminer les coups qui donnent une victoire immediate a l'adversaire
 
-Le but est d'eviter de depenser des iterations MCTS sur des cas simples a detecter localement.
-
-### Rollout plus oriente
-Le rollout n'est pas purement uniforme. Les coups sont tries selon une regle simple, puis le joueur tire parmi un petit sous-ensemble. L'idee est de reduire un peu le bruit des simulations sans introduire une heuristique trop specialisee au jeu.
+Le rollout n'est pas purement uniforme. Les coups sont tries selon une regle simple, puis le joueur tire parmi un petit sous-ensemble. L'idee est de reduire un peu le bruit des simulations sans ecrire une heuristique specialisee du jeu.
 
 ### Objectif
-Cette version vise a etre plus solide que la version basique contre des adversaires un peu meilleurs qu'un joueur purement aleatoire, tout en restant compatible avec les contraintes du moteur fourni.
+Cette version vise a etre plus solide qu'un MCTS minimal, tout en restant compatible avec les contraintes du moteur fourni.
+
+## Version basique de remplacement : `joueurs/joueur_MCTS_basique/joueur_MCTS.*`
+
+Cette version cherche a rester un MCTS plus simple :
+
+- pas de filtre tactique avant la recherche
+- pas de detection explicite d'un gain immediat avant l'arbre
+- rollout purement aleatoire
+
+Elle est stockee dans un sous-dossier et non compilee par defaut. L'interet de cette organisation est pratique : si l'on souhaite tester la version basique a la place de la version principale, il suffit de :
+
+1. supprimer ou mettre de cote `joueurs/joueur_MCTS.cpp` et `joueurs/joueur_MCTS.h`
+2. deplacer `joueurs/joueur_MCTS_basique/joueur_MCTS.cpp` et `joueurs/joueur_MCTS_basique/joueur_MCTS.h` directement dans `joueurs/`
+3. recompiler
+
+Ainsi, aucun renommage manuel n'est necessaire dans le code source.
 
 ## 4. Particularite importante du moteur `jeu.o`
 
@@ -103,10 +96,10 @@ Autrement dit, il n'est pas prudent de supposer que :
 Jeu copie = jeu;
 ```
 
-donne toujours un etat autonome, isole, manipulable librement dans une simulation sans effet de bord. (Risque d'erreur de segmentation par exemple)
+donne toujours un etat autonome, isole, manipulable librement dans une simulation sans effet de bord.
 
 ### Consequence directe
-Les deux joueurs utilisent donc un historique interne des coups : `_historique_partie`.
+Les joueurs utilisent donc un historique interne des coups : `_historique_partie`.
 
 Avant certaines operations importantes, ils reconstruisent un etat coherent par la sequence suivante :
 
@@ -152,11 +145,6 @@ Meme si des tests locaux ne montrent pas d'erreur a `9 ms`, il peut rester un ri
 
 Garder une petite marge de securite est prudent.
 
-### Recommandation pratique
-- commencer avec une valeur conservative
-- augmenter seulement si les tests sont stables
-- ne pas considerer qu'une valeur est sure simplement parce qu'elle passe sur quelques executions locales, sauf si on accepte de jouer de manière risquée.
-
 ## `C_EXPLORATION`
 
 ### Ce que ce parametre controle
@@ -171,11 +159,6 @@ Garder une petite marge de securite est prudent.
 - le joueur se concentre plus vite sur les coups deja juges bons
 - il exploite davantage
 - mais il risque de passer a cote d'une branche meilleure encore peu testee
-
-### Recommandation pratique
-- avec tres peu de temps, une valeur trop haute disperse vite la recherche
-- contre un adversaire faible, on peut souvent baisser un peu `C_EXPLORATION`
-- contre un adversaire plus fort, il faut garder assez d'exploration pour ne pas se figer trop tot
 
 ## `MAX_ROLLOUT_DEPTH`
 
@@ -192,43 +175,6 @@ Garder une petite marge de securite est prudent.
 - on peut faire plus de simulations
 - mais les rollouts deviennent plus courts et parfois moins utiles
 
-### Recommandation pratique
-- si les rollouts sont peu informatifs, augmenter fortement la profondeur n'est pas toujours rentable
-- si le moteur est lent, une profondeur trop grande coute cher
-- il faut trouver un compromis entre quantite et qualite de simulations
-
-## Reglage selon l'adversaire
-
-### Contre un joueur aleatoire ou faible
-On peut souvent :
-
-- baisser un peu `C_EXPLORATION`
-- garder `MAX_ROLLOUT_DEPTH` modere
-- garder `MAX_TIME_MS` prudent plutot que maximal
-
-L'idee est qu'il vaut souvent mieux exploiter vite les lignes deja bonnes.
-
-### Contre un joueur heuristique
-On peut essayer :
-
-- un `C_EXPLORATION` intermediaire
-- une profondeur de rollout un peu mieux travaillee si elle reste rentable
-- un `MAX_TIME_MS` assez stable pour laisser l'arbre s'installer
-
-Dans ce cas, les filtres tactiques de `joueur_MCTS` peuvent devenir plus utiles.
-
-### Contre un autre joueur MCTS
-On peut souvent :
-
-- baisser un peu `C_EXPLORATION` pour exploiter davantage
-- tester si augmenter `MAX_ROLLOUT_DEPTH` apporte vraiment un meilleur signal
-- augmenter `MAX_TIME_MS` seulement si l'environnement reste stable
-
-Mais attention :
-
-- si les rollouts restent tres bruités, augmenter `MAX_ROLLOUT_DEPTH` ne sert pas forcement
-- si le temps est instable, augmenter `MAX_TIME_MS` peut surtout rapprocher des limites de l'arbitre
-
 ## 6. Limites et pistes d'amelioration
 
 ### Cout de reconstruction d'etat
@@ -244,10 +190,10 @@ Les performances changent vite quand on modifie :
 - l'exploration
 - la profondeur des rollouts
 
-Ces parametres doivent donc etre ajustes de maniere "empirique" selon nous.
+Ces parametres doivent donc etre ajustes empiriquement.
 
 ### Amelioration des rollouts
-La version amelioree guide deja un peu les rollouts, mais on pourrait encore tester :
+La version principale guide deja un peu les rollouts, mais on pourrait encore tester :
 
 - des politiques de rollout moins bruitees
 - des coupures mieux choisies
@@ -265,22 +211,11 @@ L'arbre alloue beaucoup de petits objets et reconstruit souvent des vecteurs de 
 
 ## 7. Conclusion
 
-Le projet propose deux versions d'un meme principe de recherche :
+Le projet propose maintenant une structure simple a manipuler :
 
-- `joueur_MCTS_basique` reste un MCTS simple, lisible et proche d'une version standard
-- `joueur_MCTS` reste lui aussi un MCTS, mais ajoute des heuristiques pragmatiques pour mieux utiliser le budget temps disponible
+- une version `joueur_MCTS` active, compilee par defaut
+- une version `joueur_MCTS` basique de remplacement, stockee dans un sous-dossier pret a etre copie dans `joueurs/`
 
-La version amelioree ne remplace pas le MCTS par autre chose. Elle conserve les quatre etapes classiques, tout en ajoutant :
+La version principale reste un MCTS avec quelques heuristiques pragmatiques. La version de remplacement reste un MCTS plus pur et plus minimal. Cette organisation permet de comparer facilement les deux approches sans demander de renommage manuel dans les fichiers au moment du test.
 
-- un filtre de gain immediat
-- un filtre de coups non perdants
-- un rollout un peu moins naif
-
-Ces choix ne rendent pas le joueur optimal en toute situation, mais ils correspondent a une approche pragmatique pour un projet pratique dans une arene de jeu avec un moteur binaire fourni et des contraintes de temps fortes.
-
-Utilisation de Claude.ai pour la reformulation du README, des commentaires, et la relecture du code.
-
-
-Projet réalisé par Walid SMIHI & Mahamadou Dembele dans le cadre du cours d'initiation aux systemes intelligents dispensés par M. Igor Stephan.
-
-
+Projet realise par Walid SMIHI et Mahamadou Dembele dans le cadre du cours d'initiation aux systemes intelligents dispense par M. Igor Stephan.

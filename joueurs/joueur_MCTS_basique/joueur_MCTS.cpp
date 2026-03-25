@@ -1,4 +1,4 @@
-#include "joueur_MCTS_basique.h"
+#include "joueur_MCTS.h"
 #include <vector>
 #include <cmath>
 #include <chrono>
@@ -51,22 +51,22 @@ namespace {
     };
 }
 
-Joueur_MCTS_Basique::Joueur_MCTS_Basique(std::string nom, bool joueur)
+Joueur_MCTS::Joueur_MCTS(std::string nom, bool joueur)
     : Joueur(nom, joueur), _etat(42), _rng(42) {}
 
-void Joueur_MCTS_Basique::initialisation() {
+void Joueur_MCTS::initialisation() {
     _rng.seed(_etat++);
 }
 
-void Joueur_MCTS_Basique::init_partie() {
+void Joueur_MCTS::init_partie() {
     _historique_partie.clear();
 }
 
-char Joueur_MCTS_Basique::nom_abbrege() const {
-    return 'B';
+char Joueur_MCTS::nom_abbrege() const {
+    return 'M';
 }
 
-void Joueur_MCTS_Basique::recherche_coup(Jeu & jeu, int& coup) {
+void Joueur_MCTS::recherche_coup(Jeu jeu, int& coup) {
     auto start = std::chrono::steady_clock::now();
 
     auto rand_index = [&](int n) -> int {

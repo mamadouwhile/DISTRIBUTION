@@ -4,7 +4,7 @@
 #include <vector>
 #include <random>
 
-class Joueur_MCTS_Basique : public Joueur
+class Joueur_MCTS : public Joueur
 {
 private:
     unsigned int _etat;
@@ -12,10 +12,10 @@ private:
     std::mt19937 _rng;
 
 public:
-    Joueur_MCTS_Basique(std::string nom, bool joueur);
+    Joueur_MCTS(std::string nom, bool joueur);
 
     void initialisation() override;
     void init_partie() override;
     char nom_abbrege() const override;
-    void recherche_coup(Jeu & jeu, int & coup) override;
+    void recherche_coup(Jeu jeu, int & coup) override;
 };

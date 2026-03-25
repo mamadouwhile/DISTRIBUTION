@@ -74,7 +74,7 @@ char Joueur_MCTS::nom_abbrege() const {
     return 'M';
 }
 
-void Joueur_MCTS::recherche_coup(Jeu & jeu, int& coup) {
+void Joueur_MCTS::recherche_coup(Jeu jeu, int& coup) {
     auto start = std::chrono::steady_clock::now();
 
     auto rand_index = [&](int n) -> int {
