@@ -10,19 +10,20 @@ set(CMAKE_CXX_STANDARD_REQUIRED on)
 set(CMAKE_CXX_EXTENSIONS off)
 add_compile_options(-Wall -Wpedantic)
 
-
 set(SRCS
     joueur.cpp
     joueur_random.cpp
     joueur_brutal.cpp
-        joueur_MCTS.cpp
+    joueur_MCTS.cpp
+    joueur_MCTS_basique.cpp
     )
-    
+
 set(HEADERS
     joueur.h
     joueur_random.h
     joueur_brutal.h
     joueur_MCTS.h
+    joueur_MCTS_basique.h
     )
 
 add_library(joueurs ${SRCS} ${HEADERS})
