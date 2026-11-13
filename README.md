@@ -47,11 +47,30 @@ Concretement :
 Dans ce projet, cet equilibre est principalement regle par `C_EXPLORATION`.
 
 
-## 3. Organisation des versions
+## 3. Compiler et lancer
 
-Le `CMakeLists.txt` des joueurs ne compile que `joueurs/joueur_MCTS.*`. Les autres versions sont rangees dans des sous-dossiers, avec les memes noms de fichiers et de classe : pour en tester une, il suffit de copier ses deux fichiers dans `joueurs/` a la place de ceux de la version principale, puis de recompiler.
+`jeu.o` est compile pour **Linux x86-64** : il faut Linux, ou WSL sous Windows. Sur Mac, il faut passer par Docker (voir plus bas).
 
-### Version principale (generique) : `joueurs/joueur_MCTS.*`
+```bash
+mkdir -p build && cd build
+cmake ..
+make
+./Arene_light
+```
+
+Le score s'affiche a la fin ("FIN DU CHALLENGE"). Pour changer d'adversaire, modifier dans `main.cpp` la ligne `Arbitre a (player::RAND, player::MCTS, NB_PARTIES);` (`player::RAND` ou `player::BRUTAL`), puis relancer `make`.
+
+### Sur Mac (avec Docker)
+
+Installer et lancer Docker Desktop, puis, depuis le dossier du projet :
+
+```bash
+docker run --rm -it --platform linux/amd64 -v "$PWD":/src -w /src gcc:13 bash -c "apt-get update -qq && apt-get install -y -qq cmake > /dev/null && mkdir -p build-linux && cd build-linux && cmake .. && make && ./Arene_light"
+```
+
+Sur un Mac a puce Apple (M1, M2...), Docker emule un processeur Intel et tout est plus lent : si l'arbitre affiche souvent `mutex non rendu`, baisser `TEMPS_MAX_MICROSECONDES` (par exemple a 3000) dans `joueurs/joueur_MCTS.cpp`.
+
+## 4. Le joueur : `joueurs/joueur_MCTS.*`
 
 Un MCTS classique (UCT), sans aucune connaissance du jeu :
 
@@ -65,15 +84,11 @@ Choix techniques expliques dans le code :
 - Chaque noeud stocke ses gains **du point de vue du joueur qui a joue le coup** de ce noeud. Ainsi, a chaque niveau, la formule UCB choisit le coup qui est bon pour le joueur qui doit jouer, que ce soit nous ou l'adversaire.
 - Pendant la simulation, on tire un numero entre 1 et `nb_coups()` et on verifie `coup_licite()`, au lieu de construire la liste des coups a chaque fois. C'est environ 4 fois plus rapide (on passe d'environ 430 a 1700 simulations par coup avec 6 ms).
 
-### Ancienne version : `joueurs/joueur_MCTS_ancien/joueur_MCTS.*`
+### Versions precedentes
 
-C'est la version principale precedente. Elle ajoutait les memes verifications tactiques, mais aussi une regle propre au puissance 4 (privilegier les coups "du milieu" dans les simulations), coupait les simulations a 16 coups et utilisait 9 ms. Elle joue bien, mais elle depasse parfois le temps (voir les resultats plus bas), et sa regle du milieu n'est pas generique.
+L'ancienne version (avec une regle propre au puissance 4 : privilegier les coups "du milieu", simulations coupees a 16 coups, 9 ms) et une version basique sans verification tactique sont dans l'historique git du depot. Elles ont servi de point de comparaison pour les resultats ci-dessous.
 
-### Version basique : `joueurs/joueur_MCTS_basique/joueur_MCTS.*`
-
-Un MCTS minimal, sans verification tactique et avec des simulations purement aleatoires.
-
-## 4. Particularite importante du moteur `jeu.o`
+## 5. Particularite importante du moteur `jeu.o`
 
 C'est le point technique central du projet. En lisant le binaire (`nm` et `objdump -d jeu.o`), on voit que :
 
@@ -88,7 +103,7 @@ Consequences pour le joueur :
 - l'arbitre ne transmet pas directement le coup de l'adversaire, mais la variable `coup` qu'il passe au joueur contient le dernier coup joue (ou `-1000` au premier coup). Le joueur s'en sert pour completer son historique ;
 - **avant de rendre son coup, le joueur remet le plateau dans la vraie position**, sinon l'arbitre continuerait la partie sur un plateau faux.
 
-## 5. Parametres et comment les regler
+## 6. Parametres et comment les regler
 
 Ils sont en haut de `joueurs/joueur_MCTS.cpp`.
 
@@ -112,7 +127,7 @@ Le poids du terme d'exploration dans UCB. On a essaye 0.5, 1.0 et 1.4 en face-a-
 
 Une securite : si un jeu inconnu ne se terminait jamais, la simulation s'arrete et compte comme un nul. Avec le jeu fourni, une partie dure moins de 50 coups, donc cette limite n'est jamais atteinte.
 
-## 6. Resultats mesures
+## 7. Resultats mesures
 
 Mesures faites avec l'arbitre fourni (10 ms par coup), le `jeu.o` fourni et une compilation en mode Debug comme dans le `CMakeLists.txt`. Les parties alternent le joueur qui commence.
 
@@ -127,14 +142,14 @@ Face-a-face nouvelle contre ancienne version (300 parties) : 122 victoires pour 
 
 Les chiffres peuvent varier d'une machine a l'autre, surtout le nombre de depassements de temps.
 
-## 7. Limites et pistes d'amelioration
+## 8. Limites et pistes d'amelioration
 
 - **Cout de la reconstruction** : chaque simulation recommence par `reset()` et le rejeu de toute la partie. C'est impose par `jeu.o`, et ca represente environ la moitie du temps de calcul.
 - **Reutilisation de l'arbre** : on pourrait garder la partie de l'arbre qui correspond au coup joue et a la reponse de l'adversaire, au lieu de repartir de zero a chaque coup.
 - **MCTS-Solver** : marquer les positions dont le resultat est certain (victoire ou defaite forcee) et remonter cette information. On l'a essaye : sur nos tests, il ne gagnait pas plus de parties, donc on l'a laisse de cote pour garder un code simple.
 - **Simulations moins aleatoires** : elles sont plus informatives si on connait le jeu (comme la regle du milieu de l'ancienne version), mais le joueur ne serait plus generique.
 
-## 8. Conclusion
+## 9. Conclusion
 
 Le joueur principal est un MCTS (UCT) generique : il ne connait pas les regles, il respecte les contraintes particulieres de `jeu.o` (plateau global, reconstruction par l'historique) et il garde une marge de temps pour ne pas perdre au temps. C'etait la principale cause de defaite de la version precedente.
 

@@ -25,3 +25,7 @@ Makefile
 Arene_light
 probe_mystere
 asm.txt
+
+# Dossiers de compilation
+build/
+build-linux/
